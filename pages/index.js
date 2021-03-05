@@ -1,65 +1,94 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import React, { useState, useEffect } from 'react'
+import Sidebar from '../components/sidebar'
+import Carousel from '../components/carousel'
+import MovieList from '../components/movielist'
+import { getMovies, getCategories } from '../actions'
 
-export default function Home() {
-  return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+class Home extends React.Component {
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+  // state = {
+  //   movies: []
+  // }
 
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
+  //static function means you dont need to create an instance of the class to call this function  
+  static async getInitialProps() {
+    const movies = await getMovies()
+    const categories = await getCategories()
+    const images = movies.map((movie) => {
+      return {
+        id: `image-${movie.id}`,
+        url: movie.cover,
+        name: movie.name
+      }
+    })
 
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
+    return {
+      movies,
+      images,
+      categories
+    }
+  }
 
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
+  constructor(props) {
+    super(props)
+    this.state = {
+      filter: 'all'
+    }
+  }
 
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
+  // is called only on Client (browser...) 
+  // componentDidMount() {
+  //   getMovies().then((movies) => {
+  //     this.setState({movies})
+  //   })
+  //   .catch((error) => {
+  //     this.setState({errorMessage: error})
+  //   })
+  // }
 
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+  changeCategory = (category) => {
+    this.setState({filter: category})
+  }
+
+  filterMovie = (movies) => {
+    debugger
+    if (this.state.filter === 'all') {
+      return movies
+    }
+    return movies.filter((m) => {
+      return m.genre && m.genre.includes(this.state.filter)
+    })
+  }
+
+  render() {
+
+    const { movies, images, categories } = this.props
+
+    return (
+        <div>
+        <div className="home-page">
+          <div className="container">
+            <div className="row">
+              <div className="col-lg-3">
+                <Sidebar 
+                changeCategory={this.changeCategory}
+                activeCategory={this.state.filter}
+                categories={categories}/>
+              </div> 
+              <div className="col-lg-9">
+                <Carousel images={images}/>
+                <h1>Displaying {this.state.filter} Movies</h1>
+              <div className="row">
+                <MovieList movies={this.filterMovie(movies) || []}/>
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
-    </div>
-  )
+      </div>
+      </div>
+      )
+  }
 }
+
+
+export default Home
